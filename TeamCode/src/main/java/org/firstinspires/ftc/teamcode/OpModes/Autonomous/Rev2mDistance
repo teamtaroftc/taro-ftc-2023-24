@@ -1,0 +1,216 @@
+/*
+Copyright (c) 2018 FIRST
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted (subject to the limitations in the disclaimer below) provided that
+the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list
+of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this
+list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+Neither the name of FIRST nor the names of its contributors may be used to
+endorse or promote products derived from this software without specific prior
+written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
+LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+/**
+ * {@link SensorREV2mDistance} illustrates how to use the REV Robotics
+ * Time-of-Flight Range Sensor.
+ *
+ * The op mode assumes that the range sensor is configured with a name of "sensor_range".
+ *
+ * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
+ *
+ * @see <a href="http://revrobotics.com">REV Robotics Web Page</a>
+ */
+@Autonomous(name = "Sensor: Rev2mDistance", group = "Sensor")
+
+public class Rev2mDistance extends LinearOpMode {
+ //   private DcMotor MotorTester;
+    private Rev2mDistanceSensor sensorRange;
+    
+    private DcMotor frontLeftMotor;
+    private DcMotor backLeftMotor;
+    private DcMotor frontRightMotor;
+    private DcMotor backRightMotor;
+    
+    private boolean isLessAmount = false;
+    
+    private boolean wantStart = true;
+    
+    private boolean wantSenseRight = true;
+    
+    private boolean detected;
+    
+    private String GEpos = "Not Detected"; 
+    
+    // assist functions
+    
+    private void killMotors() {
+        frontLeftMotor.setPower(0);
+        backLeftMotor.setPower(0);
+        frontRightMotor.setPower(0);
+        backRightMotor.setPower(0);
+    }
+    
+    private void setMotors(double num) {
+        frontLeftMotor.setPower(num);
+        backLeftMotor.setPower(num);
+        frontRightMotor.setPower(num);
+        backRightMotor.setPower(num);
+    }
+    
+    private void start(boolean wantStart) {
+        if (wantStart) {
+            setMotors(0.15);
+            sleep(2000);
+            killMotors();
+        }
+    }
+
+    private void senseRight(boolean wantSenseRight) {
+        if(wantSenseRight) {
+            detected = false;
+            int time = 0;
+            frontLeftMotor.setPower(0.35);
+            backLeftMotor.setPower(-0.36);
+            frontRightMotor.setPower(-0.35);
+            backRightMotor.setPower(0.36);
+            while(!detected && time < 600) {
+                if(sensorRange.getDistance(DistanceUnit.INCH) <= 20){
+                    detected = true;
+                    GEpos = "center";
+                }
+                sleep(50);
+                time += 50;
+            }
+            time = 0;
+            sleep(100);
+            
+            while(!detected && time < 220) {
+                if(sensorRange.getDistance(DistanceUnit.INCH) <= 20){
+                    detected = true;
+                    GEpos = "right";
+                }
+                sleep(20);
+                time += 20;
+            }
+            if(!detected) {
+                GEpos = "left";
+            }
+            killMotors();
+        }
+    }
+    @Override
+    public void runOpMode() {
+        // you can use this as a regular DistanceSensor.
+        sensorRange = hardwareMap.get(Rev2mDistanceSensor.class, "sensor_range");
+        frontLeftMotor = hardwareMap.dcMotor.get("fldrive");
+        backLeftMotor = hardwareMap.dcMotor.get("bldrive");
+        frontRightMotor = hardwareMap.dcMotor.get("frdrive");
+        backRightMotor = hardwareMap.dcMotor.get("brdrive");
+      
+      //  MotorTester = hardwareMap.get(DcMotor.class, "motorTester");
+        
+        // you can also cast this to a Rev2mDistanceSensor if you want to use added
+        // methods associated with the Rev2mDistanceSensor class.
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
+
+        frontRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        backRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        telemetry.addData(">>", "Press start to continue");
+        telemetry.update();
+
+        waitForStart();
+        while(opModeIsActive()) {
+            /* generic DistanceSensor methods.
+            if(sensorRange.getDistance(DistanceUnit.INCH) <= 2){
+                MotorTester.setPower(0.5);
+            }
+            else{
+                MotorTester.setPower(0.0);
+            }
+            */
+            
+            
+            // if(sensorRange.getDistance(DistanceUnit.INCH) < 2) {
+            //     isLessAmount = true;
+            // }
+            
+            // if(isLess20) {
+            //     frontLeftMotor.setPower(0);
+            //     backLeftMotor.setPower(0);
+            //     frontRightMotor.setPower(0);
+            //     backRightMotor.setPower(0);
+            // }
+            // else {
+            //     frontLeftMotor.setPower(0.15);
+            //     backLeftMotor.setPower(0.15);
+            //     frontRightMotor.setPower(0.15);
+            //     backRightMotor.setPower(0.15);
+            // }
+            
+            start(wantSenseRight);
+            if(wantStart) {
+                wantStart = false;
+            }
+            
+            senseRight(wantSenseRight);
+            if(wantSenseRight) {
+                wantSenseRight = false;
+            }
+            
+            telemetry.addData("deviceName",sensorRange.getDeviceName() );
+            telemetry.addData("range", String.format("%.01f mm", sensorRange.getDistance(DistanceUnit.MM)));
+            telemetry.addData("range", String.format("%.01f cm", sensorRange.getDistance(DistanceUnit.CM)));
+            telemetry.addData("range", String.format("%.01f m", sensorRange.getDistance(DistanceUnit.METER)));
+            telemetry.addData("range", String.format("%.01f in", sensorRange.getDistance(DistanceUnit.INCH)));
+            // where is it
+            telemetry.addData("Randomized Element", GEpos);
+            // can sense?
+            telemetry.addData("Detected? ", detected);
+            // Rev2mDistanceSensor specific methods.
+            telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
+            telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
+
+            telemetry.update();
+        }
+        
+    }
+
+}
+
+
